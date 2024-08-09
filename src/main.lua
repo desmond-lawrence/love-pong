@@ -32,19 +32,26 @@ function ball:update()
     local newX = self.x + self.velocityX
     local newY = self.y + self.velocityY
 
+    -- check for collision with right wall
     if newX >= windowW then
         newX = windowW - (newX - windowW)
         self.velocityX = self.velocityX * -1
+        game.score = game.score + 1
     end
 
+    -- check for collision with bottom wall
     if newY >= windowH then
         newY = windowH - (newY - windowH)
         self.velocityY = self.velocityY * -1
-    elseif newY <= 0 then
+    end
+
+    -- check for collision with top wall
+    if newY <= 0 then
         newY = newY * -1
         self.velocityY = self.velocityY * -1
     end
 
+    -- check for collision with paddle
     if paddle:inside(newX, newY) then
         self.velocityX = self.velocityX * -1
         self.velocityY = self.velocityY * -1
@@ -93,6 +100,9 @@ function love.draw()
 
     -- drawing the paddle
     G.rectangle("fill", paddle.x, paddle.y, paddle.w, paddle.h, paddle.radius, paddle.radius)
+
+    -- drawing the score
+    G.print("Score: ".. game.score, 10, 10)
 end
 
 function love.keyreleased(key)
