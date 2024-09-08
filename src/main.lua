@@ -2,7 +2,7 @@ local G = love.graphics
 local K = love.keyboard
 local windowW, windowH = G.getDimensions()
 local game = { isPaused = false, isOver = false, score = 0 }
-local ball = { x = 0, y = 0, speed = 5, size = 20, velocityX = 0, velocityY = 0 }
+local ball = { x = 0, y = 0, angle = 0, size = 20, velocity = 5 }
 local paddle = { x = 0, y = 0, w = 20, h = 80, speed = 10, radius = 0 }
 
 --- moving the paddle up and setting the minimum y value to 0
@@ -26,36 +26,45 @@ function paddle:inside(x, y)
         and y <= self.y + self.h
 end
 
+
+--- Reverses the angle of the ball when it collides with something.
+--- This function is called when the ball collides with an object, such as a wall or the paddle.
+--- The angle is updated by adding 180 degrees to the current angle, and then taking the modulus of 360 to keep the angle within the range of 0 to 360 degrees.
+function ball:collide()
+    self.angle = (self.angle + 90) % 360
+end
+
 --- updating the ball position based on the velocity
 --- do collision detection
 function ball:update()
-    local newX = self.x + self.velocityX
-    local newY = self.y + self.velocityY
+    local radians = math.rad(self.angle)
+    local newX = self.x + (self.velocity * math.cos(radians))
+    local newY = self.y + (self.velocity * math.sin(radians))
 
     -- check for collision with right wall
     if newX >= windowW then
-        newX = windowW - (newX - windowW)
-        self.velocityX = self.velocityX * -1
+        self:collide()
         game.score = game.score + 1
     end
 
     -- check for collision with bottom wall
     if newY >= windowH then
-        newY = windowH - (newY - windowH)
-        self.velocityY = self.velocityY * -1
+        self:collide()
     end
 
     -- check for collision with top wall
     if newY <= 0 then
-        newY = newY * -1
-        self.velocityY = self.velocityY * -1
+        self:collide()
     end
 
     -- check for collision with paddle
     if paddle:inside(newX, newY) then
-        self.velocityX = self.velocityX * -1
-        self.velocityY = self.velocityY * -1
+        self:collide()
     end
+
+    radians = math.rad(self.angle)
+    newX = newX + (self.velocity * math.cos(radians))
+    newY = newY + (self.velocity * math.sin(radians))
 
     self.x = newX
     self.y = newY
@@ -66,12 +75,8 @@ function love.load()
     ball.x = windowW / 2
     ball.y = windowH / 2
 
-    -- set the initial velocity to random values
-    local velocityValues = { -1, 1 }
     math.randomseed(os.time())
-    ball.velocityX = velocityValues[math.random(2)] * ball.speed
-    math.randomseed(os.time())
-    ball.velocityY = velocityValues[math.random(2)] * ball.speed
+    ball.angle = math.random(359)
 
     -- setting the paddle's radius to half it's width
     paddle.radius = paddle.w * 0.5
