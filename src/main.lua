@@ -1,9 +1,13 @@
 local G = love.graphics
+local A = love.audio
 local K = love.keyboard
 local windowW, windowH = G.getDimensions()
 local game = { isPaused = false, isOver = false, score = 0 }
 local ball = { x = 0, y = 0, angle = 0, size = 20, velocity = 5 }
 local paddle = { x = 0, y = 0, w = 20, h = 80, speed = 10, radius = 0 }
+local bonk = A.newSource("audio/bonk.ogg", "static")
+local pauseFont = G.newFont(50)
+local scoreFont = G.newFont(30)
 
 --- moving the paddle up and setting the minimum y value to 0
 function paddle:up()
@@ -32,6 +36,8 @@ end
 --- The angle is updated by adding 180 degrees to the current angle, and then taking the modulus of 360 to keep the angle within the range of 0 to 360 degrees.
 function ball:collide()
     self.angle = (self.angle + 90) % 360
+    bonk:seek(0)
+    bonk:play()
 end
 
 --- updating the ball position based on the velocity
@@ -107,7 +113,13 @@ function love.draw()
     G.rectangle("fill", paddle.x, paddle.y, paddle.w, paddle.h, paddle.radius, paddle.radius)
 
     -- drawing the score
+    G.setFont(scoreFont)
     G.print("Score: ".. game.score, 10, 10)
+
+    if game.isPaused then
+        G.setFont(pauseFont)
+        G.print("Paused", windowW / 2, windowH / 2)
+    end
 end
 
 function love.keyreleased(key)
